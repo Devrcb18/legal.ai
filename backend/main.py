@@ -88,7 +88,6 @@ async def generate(req: GenerateRequest):
         messages = [{'role': 'system', 'content': system_prompt}, {'role': 'user', 'content': doc_prompt}]
         content = await call_hf_chat(messages, max_tokens=900)
 
-        # Build a .docx and return as an attachment
         doc = Document()
         doc.add_heading(req.doc_type, level=1)
         for para in content.split('\n'):
