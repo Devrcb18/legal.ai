@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal.AI - AI Legal Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        :root {
+            --primary-blue: #0d2a57;
+            --primary-blue-dark: #081c3a;
+            --accent-green: #28a745;
+            --light-gray: #f4f7fa;
+            --border-color: #e1e6ec;
+            --text-color: #333;
+            --white: #ffffff;
+            --font-family: 'Inter', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--light-gray);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2.5rem;
+        }
+        .header > div {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header .logo-icon {
+            width: 32px;
+            height: 32px;
+            color: var(--primary-blue);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .card {
+            background-color: var(--white);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        /* --- Mode Switcher --- */
+        .mode-switcher {
+            display: flex;
+            background-color: var(--light-gray);
+            border-radius: 12px;
+            padding: 6px;
+            margin-bottom: 2rem;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            background-color: transparent;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: #555;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn.active {
+            background-color: var(--white);
+            color: var(--primary-blue);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        
+        .view {
+            display: none;
+        }
+        .view.active {
+            display: block;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper .icon {
+            position: absolute;
+            left: 12px;
+            width: 20px;
+            height: 20px;
+            color: #888;
+            pointer-events: none;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: var(--font-family);
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        input[type="text"] {
+            padding-left: 38px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(13, 42, 87, 0.1);
+        }
+
+        .doc-type-group .options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .doc-type-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .doc-type-label {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .doc-type-label .icon {
+            width: 20px;
+            height: 20px;
+            color: #555;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        .switch input { display: none; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 18px; width: 18px;
+            left: 3px; bottom: 3px; background-color: white;
+            transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--accent-green); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .generate-btn {
+            grid-column: 1 / -1;
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            padding: 0.8rem 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .generate-btn:hover {
+            background-color: var(--primary-blue-dark);
+            transform: translateY(-2px);
+        }
+        
+        .generate-btn:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .generate-btn .icon {
+            width: 20px;
+            height: 20px;
+            background-color: var(--accent-green);
+            border-radius: 50%;
+            padding: 2px;
+        }
+
+        .output-card {
+            display: none;
+        }
+        .output-card h3 {
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .preview-container {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        
+        .doc-placeholder {
+            flex: 1;
+            height: 150px;
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            background: repeating-linear-gradient(var(--light-gray), var(--light-gray) 10px, var(--white) 10px, var(--white) 20px);
+            padding: 1rem;
+        }
+        
+        .doc-placeholder div {
+            background-color: #e0e0e0;
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+        .doc-placeholder div:first-child { width: 40%; }
+        .doc-placeholder div:nth-child(2) { width: 90%; }
+        .doc-placeholder div:nth-child(3) { width: 80%; }
+        .doc-placeholder div:nth-child(4) { width: 95%; }
+
+        .download-box {
+            background-color: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            padding: 1rem;
+            width: 220px;
+        }
+
+        .download-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .download-header .icon {
+            color: var(--accent-green);
+            width: 20px;
+            height: 20px;
+        }
+
+        .download-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .download-btn {
+            width: 100%;
+            padding: 0.6rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--light-gray);
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .download-btn:hover {
+            background-color: #e1e6ec;
+        }
+        
+        .download-btn.primary {
+            background-color: var(--accent-green);
+            color: var(--white);
+            border-color: var(--accent-green);
+        }
+        .download-btn.primary:hover {
+            background-color: #218838;
+        }
+        
+        /* --- Chat Assistant Styles --- */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 65vh;
+            background-color: var(--white);
+        }
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .message {
+            max-width: 80%;
+            padding: 0.75rem 1.25rem;
+            border-radius: 20px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .ai-message {
+            background-color: var(--light-gray);
+            color: var(--text-color);
+            border-bottom-left-radius: 4px;
+            align-self: flex-start;
+        }
+        .user-message {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border-bottom-right-radius: 4px;
+            align-self: flex-end;
+        }
+        .chat-input-area {
+            display: flex;
+            gap: 1rem;
+            border-top: 1px solid var(--border-color);
+            padding: 1rem;
+            background-color: var(--white);
+        }
+        #chat-input {
+            flex-grow: 1;
+            padding-left: 1rem;
+        }
+        #send-button {
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0 1.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        #send-button:hover {
+            background-color: var(--primary-blue-dark);
+        }
+        #send-button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 640px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .preview-container {
+                flex-direction: column;
+            }
+            .download-box {
+                width: 100%;
+            }
+            .chat-container {
+                height: 70vh;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <img src="/img/kfkg.png" class="logo-icon" alt="Devx Logo">
+        <div>
+            <h1>Legal.AI</h1>
+            <p style="font-size: 0.9rem; color: #666; margin: 0;">Developed and managed by Devx</p>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <div class="card">
+            <!-- MODE SWITCHER -->
+            <div class="mode-switcher">
+                <button class="mode-btn active" data-mode="generator">Generator</button>
+                <button class="mode-btn" data-mode="assistant">Assistant</button>
+            </div>
+
+            <!-- VIEW 1: DOCUMENT GENERATOR -->
+            <div id="generator-view" class="view active">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="country">Country</label>
+                        <div class="input-wrapper">
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                            <input type="text" id="country" placeholder="e.g., United States">
+                        </div>
+                    </div>
+
+                    <div class="form-group doc-type-group">
+                        <label>Document Type</label>
+                        <div class="options">
+                            <div class="doc-type-option">
+                                <div class="doc-type-label">
+                                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                    <span>Contract</span>
+                                </div>
+                                <label class="switch"><input type="radio" name="doc_type" value="Contract" checked><span class="slider"></span></label>
+                            </div>
+                            <div class="doc-type-option">
+                                <div class="doc-type-label">
+                                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                                    <span>Brief</span>
+                                </div>
+                                <label class="switch"><input type="radio" name="doc_type" value="Brief"><span class="slider"></span></label>
+                            </div>
+                            <div class="doc-type-option">
+                                <div class="doc-type-label">
+                                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                    <span>Motion</span>
+                                </div>
+                                <label class="switch"><input type="radio" name="doc_type" value="Motion"><span class="slider"></span></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="case-description">Case Description</label>
+                        <textarea id="case-description" placeholder="Provide key details about your situation..."></textarea>
+                    </div>
+
+                    <button class="generate-btn" id="generateBtn">
+                        <span>Generate Document</span>
+                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </button>
+                </div>
+                 <!-- OUTPUT CARD for Generator -->
+                <div class="output-card" id="outputCard">
+                    <h3>Output</h3>
+                    <div class="preview-container">
+                        <div class="doc-placeholder">
+                            <div></div><div></div><div></div><div></div><div></div><div></div>
+                        </div>
+                        <div class="download-box">
+                            <div class="download-header">
+                                <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                                <span>Download Ready</span>
+                            </div>
+                            <div class="download-buttons">
+                                <p style="font-size: 0.9em; color: #555; text-align: center; margin-bottom: 1em;">Your document has been generated.</p>
+                                <button class="download-btn primary" id="downloadDocxBtn">Download DOCX</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="assistant-view" class="view">
+                <div class="chat-container">
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="message ai-message">
+                            <p>Hello! I am Legal.AI. How can I assist you today? Please describe your legal query.
+                            <br><small>Note: I am an AI assistant. This is not legal advice.</small></p>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" id="chat-input" placeholder="Ask a legal question...">
+                        <button id="send-button">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+         
+            let generatedDocBlob = null;
+            let generatedDocName = '';
+
+            const modeButtons = document.querySelectorAll('.mode-btn');
+            const generatorView = document.getElementById('generator-view');
+            const assistantView = document.getElementById('assistant-view');
+            const generateBtn = document.getElementById('generateBtn');
+            const outputCard = document.getElementById('outputCard');
+            const countryInput = document.getElementById('country');
+            const caseDescriptionTextarea = document.getElementById('case-description');
+            const chatMessages = document.getElementById('chat-messages');
+            const chatInput = document.getElementById('chat-input');
+            const sendButton = document.getElementById('send-button');
+            const downloadDocxBtn = document.getElementById('downloadDocxBtn');
+
+            modeButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    modeButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    const mode = button.dataset.mode;
+                    if (mode === 'generator') {
+                        generatorView.classList.add('active');
+                        assistantView.classList.remove('active');
+                    } else {
+                        assistantView.classList.add('active');
+                        generatorView.classList.remove('active');
+                    }
+                });
+            });
+
+            generateBtn.addEventListener('click', async () => {
+                const originalButtonText = generateBtn.querySelector('span').textContent;
+                const country = countryInput.value.trim();
+                const case_description = caseDescriptionTextarea.value.trim();
+                const doc_type_element = document.querySelector('input[name="doc_type"]:checked');
+
+                if (!country || !case_description || !doc_type_element) {
+                    alert('Please fill in all fields.');
+                    return;
+                }
+                
+                const doc_type = doc_type_element.value;
+                generatedDocName = `${doc_type.replace(/\s+/g, '_')}.docx`;
+
+                generateBtn.disabled = true;
+                generateBtn.querySelector('span').textContent = 'Generating...';
+
+                try {
+                    const payload = { country, case_description, mode: 'document', doc_type };
+                    const resp = await fetch('/api/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                    });
+
+                    if (!resp.ok) {
+                        const errorText = await resp.text();
+                        throw new Error(`API Error: ${resp.status} ${errorText}`);
+                    }
+
+                    generatedDocBlob = await resp.blob();
+                    outputCard.style.display = 'block';
+                    outputCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                } catch (err) {
+                    console.error(err);
+                    alert('Error generating document: ' + err.message);
+                } finally {
+                    generateBtn.disabled = false;
+                    generateBtn.querySelector('span').textContent = originalButtonText;
+                }
+            });
+
+
+            downloadDocxBtn.addEventListener('click', () => {
+                if (generatedDocBlob) {
+                    const url = window.URL.createObjectURL(generatedDocBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = generatedDocName;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    alert("No document has been generated yet.");
+                }
+            });
+
+            const addMessage = (text, sender) => {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message', `${sender}-message`);
+                const p = document.createElement('p');
+                p.textContent = text;
+                messageDiv.appendChild(p);
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                return messageDiv;
+            };
+
+            const handleSendMessage = async () => {
+                const userText = chatInput.value.trim();
+                if (userText === '') return;
+
+                addMessage(userText, 'user');
+                chatInput.value = '';
+                sendButton.disabled = true;
+
+                const typingIndicator = addMessage('...', 'ai-message');
+                
+                try {
+                    const country = countryInput.value.trim();
+                    if (!country) {
+                         throw new Error("Please specify a country in the Generator tab first.");
+                    }
+
+                    const payload = {
+                        country: country,
+                        case_description: userText,
+                        mode: 'advice',
+                        doc_type: null
+                    };
+
+                    const resp = await fetch('/api/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                    });
+
+                    if (!resp.ok) {
+                        const errorText = await resp.text();
+                        throw new Error(`API Error: ${resp.status} ${errorText}`);
+                    }
+                    
+                    const j = await resp.json();
+                    typingIndicator.querySelector('p').innerHTML = marked.parse(j.text);
+
+                } catch (err) {
+                    console.error(err);
+                    typingIndicator.querySelector('p').textContent = 'Error: ' + err.message;
+                } finally {
+                    sendButton.disabled = false;
+                }
+            };
+
+            sendButton.addEventListener('click', handleSendMessage);
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleSendMessage();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
