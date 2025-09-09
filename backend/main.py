@@ -5,11 +5,12 @@ from docx import Document
 from io import BytesIO
 import os
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import OpenAI, AuthenticationError
 import asyncio
 load_dotenv()
 
-HF_TOKEN = os.getenv("HF_TOKEN",'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')
+HF_TOKEN = os.getenv("HF_TOKEN",'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')
+MODEL = os.getenv("MODEL", "openai/gpt-oss-120b:cerebras")
 client = OpenAI(
     base_url="https://router.huggingface.co/v1",
     api_key=HF_TOKEN,
@@ -40,15 +41,18 @@ class GenerateRequest(BaseModel):
     case_description: str
     doc_type: str | None = None 
 async def call_hf_chat(messages, max_tokens=512):
-    
+
     def generate():
-        completion = client.chat.completions.create(
-            model="openai/gpt-oss-120b",
-            messages=messages,
-            max_tokens=max_tokens,
-        )
-        return completion.choices[0].message.content
-    
+        try:
+            completion = client.chat.completions.create(
+                model=MODEL,
+                messages=messages,
+                max_tokens=max_tokens,
+            )
+            return completion.choices[0].message.content
+        except AuthenticationError as e:
+            raise HTTPException(status_code=401, detail="Authentication failed. Please check your HF_TOKEN in the .env file.")
+
     result = await asyncio.to_thread(generate)
     return result
 
