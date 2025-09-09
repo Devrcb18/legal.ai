@@ -9,7 +9,7 @@ from openai import OpenAI, AuthenticationError
 import asyncio
 load_dotenv()
 
-HF_TOKEN = os.getenv("HF_TOKEN",'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')
+HF_TOKEN = os.getenv("HF_TOKEN",'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')
 MODEL = os.getenv("MODEL", "openai/gpt-oss-120b:cerebras")
 client = OpenAI(
     base_url="https://router.huggingface.co/v1",
